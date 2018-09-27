@@ -22,10 +22,16 @@ class SearchResult extends Component {
       "title",
       "A Nested Details Screen"
     );
+    this.REQUEST_URL =
+      "http://api.douban.com/v2/movie/search?q=" + `${this.query}`;
+    this.dataSource = new ListView.DataSource({
+      rowHasChanged: (r1, r2) => r1 !== r2
+    });
     this.state = {
-      movies: new ListView.DataSource({
-        rowHasChanged: (r1, r2) => r1 !== r2
-      }),
+      count: 20,
+      start: 0,
+      total: 0,
+      movies: [],
       loaded: false
     };
     this.fetchdata();
@@ -36,13 +42,16 @@ class SearchResult extends Component {
   };
 
   fetchdata() {
-    REQUEST_URL = "http://api.douban.com/v2/movie/search?q=" + `${this.query}`;
+    var REQUEST_URL = this.Requesturl();
     fetch(REQUEST_URL)
       .then(response => response.json())
       .then(responsedata => {
+        var newStart = responsedata.start + responsedata.count;
         this.setState({
-          movies: this.state.movies.cloneWithRows(responsedata.subjects),
-          loaded: true
+          movies: responsedata.subjects,
+          loaded: true,
+          total: responsedata.total,
+          start: newStart
         });
       })
       .done();
@@ -54,6 +63,51 @@ class SearchResult extends Component {
     });
   }
 
+  onEndReached() {
+    if (this.state.total > this.state.start) {
+      this.loadmore();
+    }
+  }
+  loadmore() {
+    var url = this.Requesturl();
+    fetch(url)
+      .then(response => response.json())
+      .then(responsedata => {
+        this.setState({
+          movies: [...this.state.movies, ...responsedata.subjects],
+          start: responsedata.start + responsedata.count
+        });
+      })
+      .done();
+  }
+  Requesturl(
+    url = this.REQUEST_URL,
+    count = this.state.count,
+    start = this.state.start
+  ) {
+    return `${url}&count=${count}&start=${start}`;
+  }
+
+  renderFooter() {
+    if (this.state.total > this.state.start)
+      return (
+        <View>
+          <ProgressBarAndroid styleAttr="Small" color="rgba(34,26,38,0.1)" />
+        </View>
+      );
+    else
+      return (
+        <View style={{ alignItems: "center", justifyContent: "center" }}>
+          <Text
+            style={{
+              color: "rgba(34,26,38,0.3)"
+            }}
+          >
+            我是有底线的
+          </Text>
+        </View>
+      );
+  }
   renerMovieList(movie) {
     return (
       <TouchableNativeFeedback onPress={this.toDetail.bind(this, movie)}>
@@ -94,7 +148,10 @@ class SearchResult extends Component {
     }
     return (
       <ListView
-        dataSource={this.state.movies}
+        renderFooter={this.renderFooter.bind(this)}
+        onEndReached={this.onEndReached.bind(this)}
+        initialListSize={this.state.count}
+        dataSource={this.dataSource.cloneWithRows(this.state.movies)}
         renderRow={this.renerMovieList.bind(this)}
       />
     );

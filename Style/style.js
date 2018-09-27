@@ -23,6 +23,12 @@ const styles = StyleSheet.create({
     resizeMode: "stretch",
     marginTop: 10
   },
+  SearchHeader: {
+    marginLeft: 7,
+    marginTop: 10,
+    color: "rgba(0,0,0,0.8)",
+    fontSize: 18
+  },
   container: {
     flex: 1,
     justifyContent: "center",
@@ -42,7 +48,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     borderBottomWidth: 1,
     borderColor: "rgba(0,0,0,0.6)",
-    paddingBottom: 6,
+    paddingBottom: 1,
     paddingTop: 6,
     flex: 1
   },
@@ -56,7 +62,7 @@ const styles = StyleSheet.create({
     fontFamily: "Times New Roman",
     fontWeight: "300",
     color: "#6435c9",
-    marginBottom: 6
+    marginBottom: 9
   },
   itemMeta: {
     fontSize: 12,

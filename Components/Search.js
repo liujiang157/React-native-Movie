@@ -1,46 +1,104 @@
+"use strict";
 import React, { Component } from "react";
-import { View, Text, TextInput, Button } from "react-native";
+import {
+  TouchableNativeFeedback,
+  View,
+  Text,
+  TextInput,
+  Button,
+  Image,
+  TouchableHighlight,
+  ListView,
+  AsyncStorage
+} from "react-native";
 import styles from "../Style/style";
 import { createStackNavigator } from "react-navigation";
 
-var REQUEST_URL = "http://api.douban.com/v2/movie/search?q=";
 class Search extends Component {
   constructor(props) {
     super(props);
-    this.state = { query: " ", movies: [2, 2] };
+    this.dataSource = new ListView.DataSource({
+      rowHasChanged: (r1, r2) => r1 !== r2
+    });
+    this.state = {
+      query: "",
+      SearchHistory: []
+    };
   }
 
   static navigationOptions = {
     title: "搜索"
   };
 
-  onChange(data) {
-    this.setState({
-      query: data
-    });
-  }
-
   toSearch() {
+    var newSearchHistory = [
+      ...new Set([this.state.query, ...this.state.SearchHistory])
+    ];
+    this.setState({
+      SearchHistory: newSearchHistory
+    });
+
+    AsyncStorage.setItem("searchHistory", JSON.stringify(newSearchHistory));
+
     this.props.navigation.navigate("SearchResult", {
       query: this.state.query,
       title: "搜索结果"
     });
   }
 
+  async HistorytoSearch(item) {
+    await this.setState({
+      query: item
+    });
+    this.toSearch();
+  }
+
+  deleteSearchHistory(item) {
+    var newSearchHistory = new Set(this.state.SearchHistory);
+    newSearchHistory.delete(item);
+    this.setState({
+      SearchHistory: [...newSearchHistory]
+    });
+  }
+
+  renderSearchHistoryList(item) {
+    return (
+      <TouchableNativeFeedback onPress={this.HistorytoSearch.bind(this, item)}>
+        <View style={styles.item}>
+          <TouchableHighlight
+            underlayColor="rgba(34,26,38,0.1)"
+            onPress={this.deleteSearchHistory.bind(this, item)}
+            style={{ height: 25, width: 25 }}
+          >
+            <Image
+              source={require("../images/delete.png")}
+              style={{ height: 24, width: 24, marginBottom: 0, opacity: 0.5 }}
+            />
+          </TouchableHighlight>
+          <View style={styles.itemContent}>
+            <Text style={styles.itemHeader}>{item}</Text>
+          </View>
+        </View>
+      </TouchableNativeFeedback>
+    );
+  }
+
   render() {
     return (
-      <View style={[styles.container, { flex: 0 }]}>
+      <View style={styles.container}>
         <View
           style={{
-            paddingTop: 7,
-            paddingLeft: 7,
-            paddingRight: 7,
-            borderColor: "rgba(100,53,201,0.7)",
+            marginTop: 7,
+            marginLeft: 7,
+            marginRight: 7,
+            borderColor: "rgba(100,53,201,0.1)",
+            borderLeftWidth: 1,
+            borderRightWidth: 1,
+            borderTopWidth: 1,
             borderBottomWidth: 1
           }}
         >
           <TextInput
-            autoFocus
             onChangeText={query =>
               this.setState({
                 query
@@ -48,6 +106,14 @@ class Search extends Component {
             }
             onSubmitEditing={this.toSearch.bind(this)}
             value={this.state.query}
+          />
+        </View>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.SearchHeader}>搜索历史：</Text>
+          <ListView
+            dataSource={this.dataSource.cloneWithRows(this.state.SearchHistory)}
+            renderRow={this.renderSearchHistoryList.bind(this)}
+            enableEmptySections={true}
           />
         </View>
       </View>

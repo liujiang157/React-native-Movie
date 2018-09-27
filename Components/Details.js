@@ -1,6 +1,7 @@
 import React, { Component } from "react";
 import { View, Text, Image, Button, ProgressBarAndroid } from "react-native";
 import MovieList from "./MovieList";
+
 import { createStackNavigator } from "react-navigation";
 import styles from "../Style/style";
 var REQUEST_URL = "http://api.douban.com/v2/movie/subject/";
